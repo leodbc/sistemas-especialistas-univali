@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa Mental - Sistema Especialista de Investimentos</title>
+    <!-- Tailwind CSS CDN para Estilização de Alto Nível -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons para Ícones Limpos -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .glow-line {
+            filter: drop-shadow(0 0 6px currentColor);
+            transition: stroke 0.3s ease, stroke-width 0.3s ease, opacity 0.3s ease;
+        }
+        .node-active {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+            border-color: #3b82f6;
+            transform: scale(1.03);
+        }
+        .node-conclusion-active {
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
+            border-color: #22c55e;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col overflow-x-hidden selection:bg-blue-500 selection:text-white">
+
+    <!-- ÁREA PRINCIPAL -->
+    <main class="flex-1 max-w-10xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        
+        <!-- COLUNA ESQUERDA: LISTA DE REGRAS (CONTROLADORES DO MAPA) -->
+        <section class="lg:col-span-4 flex flex-col bg-slate-900/3s0 p-4 rounded-xl border border-slate-800/80">
+            <h2 class="font-bold text-slate-200 flex items-center gap-2 text-sm border-b border-slate-800 pb-3 mb-3">
+                <i data-lucide="list-ordered" class="text-blue-500 w-4 h-4"></i>
+                Regras de Produção (Selecione para destacar)
+            </h2>
+            
+            <!-- Lista com Scroll de Regras -->
+            <div class="flex-1 overflow-y-auto max-h-[850px] space-y-2 pr-1" id="rules-selector-container">
+                <!-- Regras de Fase 1 (Intermediárias) -->
+                <div class="text-[10px] uppercase font-bold text-slate-500 tracking-wider pt-2 pb-1">Fase 1: Deduções Intermediárias</div>
+                
+                <div onmouseenter="highlightRule(1)" onmouseleave="clearHighlight()" class="rule-card p-2.5 bg-slate-900 border border-slate-800 hover:border-blue-500/50 rounded-lg cursor-pointer transition-all text-xs" data-rule="1">
+                    <div class="flex justify-between font-mono text-[9px] font-bold text-blue-400 mb-1"><span>REGRA 1</span><span>INTERMEDIÁRIA</span></div>
+                    <p class="text-slate-300"><strong>SE</strong> Sem Reserva (P1) <strong>E</strong> Com Dívidas (P10) <br><strong>ENTÃO</strong> Capacidade Financeira = <strong>Baixa</strong></p>
+                </div>
+
+                <div onmouseenter="highlightRule(2)" onmouseleave="clearHighlight()" class="rule-card p-2.5 bg-slate-900 border border-slate-800 hover:border-blue-500/50 rounded-lg cursor-pointer transition-all text-xs" data-rule="2">
+                    <div class="flex justify-between font-mono text-[9px] font-bold text-blue-400 mb-1"><span>REGRA 2</span><span>INTERMEDIÁRIA</span></div>
+                    <p class="text-slate-300"><strong>SE</strong> Com Reserva (P1) <strong>E</strong> Sem Dívidas (P10) <strong>E</strong> Renda Alta (P14) <br><strong>ENTÃO</strong> Capacidade Financeira = <strong>Alta</strong></p>
+                </div>
+
+                <div onmouseenter="highlightRule(3)" onmouseleave="clearHighlight()" class="rule-card p-2.5 bg-slate-900 border border-slate-800 hover:border-blue-500/50 rounded-lg cursor-pointer transition-all text-xs" data-rule="3">
+                    <div class="flex justify-between font-mono text-[9px] font-bold text-blue-400 mb-1"><span>REGRA 3</span><span>INTERMEDIÁRIA</span></div>
+                    <p class="text-slate-300"><strong>SE</strong> Com Reserva (P1) <strong>E</strong> Investe 10% a 30% (P9) <br><strong>ENTÃO</strong> Capacidade Financeira = <strong>Média</strong></p>
+                </div>
+
+                <div onmouseenter="highlightRule(4)" onmouseleave="clearHighlight()" class="rule-card p-2.5 bg-slate-900 border border-slate-800 hover:border-blue-500/50 rounded-lg cursor-pointer transition-all text-xs" data-rule="4">
+                    <div class="flex justify-between font-mono text-[9px] font-bold text-blue-400 mb-1"><span>REGRA 4</span><span>INTERMEDIÁRIA</span></div>
+                    <p class="text-slate-300"><strong>SE</strong> Retiraria Tudo (P11) <strong>E</strong> Tem Medo de Perdas (P6) <br><strong>ENTÃO</strong> Tolerância ao Risco = <strong>Baixa</strong></p>
+                </div>
+
+                <div onmouseenter="highlightRule(5)" onmouseleave="clearHighlight()" class="rule-card p-2.5 bg-slate-900 border border-slate-800 hover:border-blue-500/50 rounded-lg cursor-pointer transition-all text-xs" data-rule="5">
+                    <div class="flex justify-between font-mono text-[9px] font-bold text-blue-400 mb-1"><span>REGRA 5</span><span>INTERMEDIÁRIA</span></div>
+                    <p class="text-slate-300"><strong>SE</strong> Compraria Mais (P11) <strong>E</strong> Aceita Perdas (P7) <br><strong>ENTÃO</strong> Tolerância ao Risco = <strong>Alta</strong></p>
+                </div>
+
+                <div onmouseenter="highlightRule(6)" onmouseleave="clearHighlight()" class="rule-card p-2.5 bg-slate-900 border border-slate-800 hover:border-blue-500/50 rounded-lg cursor-pointer transition-all text-xs" data-rule="6">
+                    <div class="flex justify-between font-mono text-[9px] font-bold text-blue-400 mb-1"><span>REGRA 6</span><span>INTERMEDIÁRIA</span></div>
+                    <p class="text-slate-300"><strong>SE</strong> Esperaria (P11) <strong>E</strong> Prefere Invest. Balanceado (P12) <br><strong>ENTÃO</strong> Tolerância ao Risco = <strong>Média</strong></p>
+                </div>
+
+                <div onmouseenter="highlightRule(7)" onmouseleave="clearHighlight()" class="rule-card p-2.5 bg-slate-900 border border-slate-800 hover:border-blue-500/50 rounded-lg cursor-pointer transition-all text-xs" data-rule="7">
+                    <div class="flex justify-between font-mono text-[9px] font-bold text-blue-400 mb-1"><span>REGRA 7</span><span>INTERMEDIÁRIA</span></div>
+                    <p class="text-slate-300"><strong>SE</strong> Não Vê Notícias (P8) <strong>E</strong> Não Entende Bolsa (P13) <br><strong>ENTÃO</strong> Conhecimento = <strong>Baixo</strong></p>
+                </div>
+
+                <div onmouseenter="highlightRule(8)" onmouseleave="clearHighlight()" class="rule-card p-2.5 bg-slate-900 border border-slate-800 hover:border-blue-500/50 rounded-lg cursor-pointer transition-all text-xs" data-rule="8">
+                    <div class="flex justify-between font-mono text-[9px] font-bold text-blue-400 mb-1"><span>REGRA 8</span><span>INTERMEDIÁRIA</span></div>
+                    <p class="text-slate-300"><strong>SE</strong> Vê Frequentemente (P8) <strong>E</strong> Entende Bolsa (P13) <br><strong>ENTÃO</strong> Conhecimento = <strong>Alto</strong></p>
+                </div>
+
+                <div onmouseenter="highlightRule(9)" onmouseleave="clearHighlight()" class="rule-card p-2.5 bg-slate-900 border border-slate-800 hover:border-blue-500/50 rounded-lg cursor-pointer transition-all text-xs" data-rule="9">
+                    <div class="flex justify-between font-mono text-[9px] font-bold text-blue-400 mb-1"><span>REGRA 9</span><span>INTERMEDIÁRIA</span></div>
+                    <p class="text-slate-300"><strong>SE</strong> Entende Parcial (P13) <strong>OU</strong> Quer Estudar (P20) <br><strong>ENTÃO</strong> Conhecimento = <strong>Médio</strong></p>
+                </div>
+
+                <!-- Regras de Fase 2 (Finais/Encadeadas) -->
+                <div class="text-[10px] uppercase font-bold text-slate-500 tracking-wider pt-4 pb-1 border-t border-slate-800">Fase 2: Conclusões Encadeadas</div>
+
+                <div onmouseenter="highlightRule(12)" onmouseleave="clearHighlight()" class="rule-card p-2.5 bg-slate-900 border border-slate-800 hover:border-green-500/50 rounded-lg cursor-pointer transition-all text-xs" data-rule="12">
+                    <div class="flex justify-between font-mono text-[9px] font-bold text-green-400 mb-1"><span>REGRA 12</span><span>DEDUÇÃO FINAL</span></div>
+                    <p class="text-slate-300"><strong>SE</strong> Capacidade Baixa <strong>OU</strong> Tolerância Baixa <br><strong>ENTÃO</strong> Perfil = <strong class="text-green-400">Conservador</strong></p>
+                </div>
+
+                <div onmouseenter="highlightRule(13)" onmouseleave="clearHighlight()" class="rule-card p-2.5 bg-slate-900 border border-slate-800 hover:border-green-500/50 rounded-lg cursor-pointer transition-all text-xs" data-rule="13">
+                    <div class="flex justify-between font-mono text-[9px] font-bold text-green-400 mb-1"><span>REGRA 13</span><span>DEDUÇÃO FINAL</span></div>
+                    <p class="text-slate-300"><strong>SE</strong> Cap. Alta <strong>E</strong> Tolerância Alta <strong>E</strong> Conhecimento Alto <br><strong>ENTÃO</strong> Perfil = <strong class="text-green-400">Arrojado</strong></p>
+                </div>
+
+                <div onmouseenter="highlightRule(14)" onmouseleave="clearHighlight()" class="rule-card p-2.5 bg-slate-900 border border-slate-800 hover:border-green-500/50 rounded-lg cursor-pointer transition-all text-xs" data-rule="14">
+                    <div class="flex justify-between font-mono text-[9px] font-bold text-green-400 mb-1"><span>REGRA 14</span><span>DEDUÇÃO FINAL</span></div>
+                    <p class="text-slate-300"><strong>SE</strong> Capacidade Média <strong>E</strong> Tolerância Média <br><strong>ENTÃO</strong> Perfil = <strong class="text-green-400">Moderado</strong></p>
+                </div>
+
+                <div onmouseenter="highlightRule(15)" onmouseleave="clearHighlight()" class="rule-card p-2.5 bg-slate-900 border border-slate-800 hover:border-green-500/50 rounded-lg cursor-pointer transition-all text-xs" data-rule="15">
+                    <div class="flex justify-between font-mono text-[9px] font-bold text-green-400 mb-1"><span>REGRA 15</span><span>DEDUÇÃO FINAL</span></div>
+                    <p class="text-slate-300"><strong>SE</strong> Tolerância Alta <strong>E</strong> Conhecimento Baixo <br><strong>ENTÃO</strong> Perfil = <strong class="text-green-400">Moderado</strong> (Por falta de teoria)</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- COLUNA CENTRAL/DIREITA: MAPA MENTAL AMPLO -->
+        <section class="lg:col-span-8 flex flex-col bg-slate-900/10 p-4 rounded-xl border border-slate-800/50 relative overflow-hidden">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-6">
+                <h2 class="font-bold text-slate-200 flex items-center gap-2 text-sm">
+                    <i data-lucide="network" class="text-blue-500 w-4 h-4"></i>
+                    Grafo de Fluxo de Decisão (Árvore Lógica do Expert SINTA)
+                </h2>
+                <div class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700" id="rule-infobox">
+                    Nenhuma Regra Selecionada
+                </div>
+            </div>
+
+            <!-- Canvas SVG para conexões dinâmicas -->
+            <div class="flex-1 flex justify-between items-center relative py-6 px-4 min-h-[500px]" id="mindmap-container">
+                <svg id="connections-svg" class="absolute inset-0 w-full h-full pointer-events-none z-0"></svg>
+
+                <!-- COLUNA 1: PERGUNTAS CHAVE (ENTRADAS) -->
+                <div class="flex flex-col justify-around h-full gap-4 z-10 w-44">
+                    <div class="text-center font-bold text-[10px] text-slate-500 uppercase tracking-widest pb-2 border-b border-slate-800/60">Perguntas Base</div>
+                    
+                    <div id="node-fin" class="bg-slate-900 border border-slate-800 p-2.5 rounded-lg text-center transition-all duration-300">
+                        <span class="text-[9px] text-blue-500 font-bold block font-mono">P1, P9, P10, P14</span>
+                        <span class="text-[11px] font-semibold text-slate-300">Fatores Financeiros</span>
+                    </div>
+
+                    <div id="node-ris" class="bg-slate-900 border border-slate-800 p-2.5 rounded-lg text-center transition-all duration-300">
+                        <span class="text-[9px] text-blue-500 font-bold block font-mono">P6, P7, P11, P12</span>
+                        <span class="text-[11px] font-semibold text-slate-300">Fatores Comportamentais</span>
+                    </div>
+
+                    <div id="node-con" class="bg-slate-900 border border-slate-800 p-2.5 rounded-lg text-center transition-all duration-300">
+                        <span class="text-[9px] text-blue-500 font-bold block font-mono">P8, P13, P20</span>
+                        <span class="text-[11px] font-semibold text-slate-300">Fatores Técnicos</span>
+                    </div>
+                </div>
+
+                <!-- COLUNA 2: VARIÁVEIS INTERMEDIÁRIAS (A "Mágica" do Encadeamento) -->
+                <div class="flex flex-col justify-around h-full gap-6 z-10 w-52">
+                    <div class="text-center font-bold text-[10px] text-slate-500 uppercase tracking-widest pb-2 border-b border-slate-800/60">Conceitos Abstratos</div>
+
+                    <!-- Var 1 -->
+                    <div id="var-cap" class="bg-slate-900/90 border border-slate-800 p-3 rounded-xl transition-all duration-300 relative text-center">
+                        <span class="absolute -top-2 left-1/2 -translate-x-1/2 bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded text-[8px] font-mono whitespace-nowrap">Var Intermediária</span>
+                        <span class="text-xs font-bold text-slate-200 block mt-1">Capacidade Financeira</span>
+                        <span class="text-[9px] text-slate-500 font-mono">[Baixa, Média, Alta]</span>
+                    </div>
+
+                    <!-- Var 2 -->
+                    <div id="var-tol" class="bg-slate-900/90 border border-slate-800 p-3 rounded-xl transition-all duration-300 relative text-center">
+                        <span class="absolute -top-2 left-1/2 -translate-x-1/2 bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded text-[8px] font-mono whitespace-nowrap">Var Intermediária</span>
+                        <span class="text-xs font-bold text-slate-200 block mt-1">Tolerância ao Risco</span>
+                        <span class="text-[9px] text-slate-500 font-mono">[Baixa, Média, Alta]</span>
+                    </div>
+
+                    <!-- Var 3 -->
+                    <div id="var-con" class="bg-slate-900/90 border border-slate-800 p-3 rounded-xl transition-all duration-300 relative text-center">
+                        <span class="absolute -top-2 left-1/2 -translate-x-1/2 bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded text-[8px] font-mono whitespace-nowrap">Var Intermediária</span>
+                        <span class="text-xs font-bold text-slate-200 block mt-1">Conhecimento de Mercado</span>
+                        <span class="text-[9px] text-slate-500 font-mono">[Baixo, Médio, Alto]</span>
+                    </div>
+                </div>
+
+                <!-- COLUNA 3: OBJETIVOS FINAIS -->
+                <div class="flex flex-col justify-around h-full gap-4 z-10 w-44">
+                    <div class="text-center font-bold text-[10px] text-slate-500 uppercase tracking-widest pb-2 border-b border-slate-800/60">Objetivos Finais</div>
+
+                    <div id="out-conservador" class="bg-slate-900 border border-slate-800 p-3 rounded-lg text-center transition-all duration-300">
+                        <span class="text-[10px] text-emerald-500 font-bold block font-mono">Conclusão</span>
+                        <span class="text-xs font-bold text-slate-300">Perfil Conservador</span>
+                    </div>
+
+                    <div id="out-moderado" class="bg-slate-900 border border-slate-800 p-3 rounded-lg text-center transition-all duration-300">
+                        <span class="text-[10px] text-emerald-500 font-bold block font-mono">Conclusão</span>
+                        <span class="text-xs font-bold text-slate-300">Perfil Moderado</span>
+                    </div>
+
+                    <div id="out-arrojado" class="bg-slate-900 border border-slate-800 p-3 rounded-lg text-center transition-all duration-300">
+                        <span class="text-[10px] text-emerald-500 font-bold block font-mono">Conclusão</span>
+                        <span class="text-xs font-bold text-slate-300">Perfil Arrojado</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- SISTEMA DE DESTAQUES VISUAIS -->
+    <script>
+        // Mapeamento de quais nós acendem para cada regra
+        const ruleConnections = {
+            1: { inputs: ['node-fin'], vars: ['var-cap'], color: '#3b82f6' },
+            2: { inputs: ['node-fin'], vars: ['var-cap'], color: '#3b82f6' },
+            3: { inputs: ['node-fin'], vars: ['var-cap'], color: '#3b82f6' },
+            4: { inputs: ['node-ris'], vars: ['var-tol'], color: '#3b82f6' },
+            5: { inputs: ['node-ris'], vars: ['var-tol'], color: '#3b82f6' },
+            6: { inputs: ['node-ris'], vars: ['var-tol'], color: '#3b82f6' },
+            7: { inputs: ['node-con'], vars: ['var-con'], color: '#3b82f6' },
+            8: { inputs: ['node-con'], vars: ['var-con'], color: '#3b82f6' },
+            9: { inputs: ['node-con'], vars: ['var-con'], color: '#3b82f6' },
+            12: { vars: ['var-cap', 'var-tol'], outputs: ['out-conservador'], color: '#10b981' },
+            13: { vars: ['var-cap', 'var-tol', 'var-con'], outputs: ['out-arrojado'], color: '#10b981' },
+            14: { vars: ['var-cap', 'var-tol'], outputs: ['out-moderado'], color: '#10b981' },
+            15: { vars: ['var-tol', 'var-con'], outputs: ['out-moderado'], color: '#10b981' }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            setTimeout(drawDefaultGraph, 300);
+        });
+
+        window.addEventListener('resize', drawDefaultGraph);
+
+        // Limpa todos os destaques do grafo
+        function clearHighlight() {
+            document.querySelectorAll('.rule-card').forEach(el => el.classList.remove('border-blue-500', 'border-green-500'));
+            document.getElementById('rule-infobox').innerText = 'Nenhuma Regra Selecionada';
+            document.getElementById('rule-infobox').className = 'text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700';
+            drawDefaultGraph();
+        }
+
+        // Destaca a regra selecionada e as conexões do grafo
+        function highlightRule(ruleId) {
+            clearHighlight();
+            
+            // Adiciona borda colorida no card selecionado
+            const card = document.querySelector(`[data-rule="${ruleId}"]`);
+            if (card) {
+                if (ruleId >= 12) {
+                    card.classList.add('border-green-500');
+                    document.getElementById('rule-infobox').innerText = `Ativo: REGRA ${ruleId} (Dedução de Perfil Final)`;
+                    document.getElementById('rule-infobox').className = 'text-[10px] text-green-400 bg-green-950/40 px-2 py-0.5 rounded border border-green-800';
+                } else {
+                    card.classList.add('border-blue-500');
+                    document.getElementById('rule-infobox').innerText = `Ativo: REGRA ${ruleId} (Dedução de Estado Intermediário)`;
+                    document.getElementById('rule-infobox').className = 'text-[10px] text-blue-400 bg-blue-950/40 px-2 py-0.5 rounded border border-blue-800';
+                }
+            }
+
+            const rule = ruleConnections[ruleId];
+            if (!rule) return;
+
+            // Redesenha grafo acendendo as conexões específicas
+            drawGraphWithActivePath(rule);
+        }
+
+        // Desenha o grafo padrão com opacidade reduzida
+        function drawDefaultGraph() {
+            const svg = document.getElementById('connections-svg');
+            svg.innerHTML = '';
+
+            // Conexões Padrão: Entradas -> Intermediárias
+            connectElements('node-fin', 'var-cap', '#334155', 1);
+            connectElements('node-ris', 'var-tol', '#334155', 1);
+            connectElements('node-con', 'var-con', '#334155', 1);
+
+            // Conexões Padrão: Intermediárias -> Conclusões
+            connectElements('var-cap', 'out-conservador', '#334155', 1);
+            connectElements('var-tol', 'out-conservador', '#334155', 1);
+
+            connectElements('var-cap', 'out-moderado', '#334155', 1);
+            connectElements('var-tol', 'out-moderado', '#334155', 1);
+            connectElements('var-con', 'out-moderado', '#334155', 1);
+
+            connectElements('var-cap', 'out-arrojado', '#334155', 1);
+            connectElements('var-tol', 'out-arrojado', '#334155', 1);
+            connectElements('var-con', 'out-arrojado', '#334155', 1);
+
+            // Reseta estilo dos nós
+            resetNodeStyles();
+        }
+
+        // Desenha destacando uma Regra ativa
+        function drawGraphWithActivePath(activeRule) {
+            const svg = document.getElementById('connections-svg');
+            svg.innerHTML = '';
+
+            // Define opacidade reduzida padrão
+            const inactiveColor = '#1e293b';
+
+            // Redesenha caminhos com cores se ativos
+            const hasInputToVar = activeRule.inputs && activeRule.vars;
+            const hasVarToOutput = activeRule.vars && activeRule.outputs;
+
+            // 1. Caminhos Esquerda -> Centro
+            const finActive = hasInputToVar && activeRule.inputs.includes('node-fin') && activeRule.vars.includes('var-cap');
+            connectElements('node-fin', 'var-cap', finActive ? activeRule.color : inactiveColor, finActive ? 2.5 : 1);
+
+            const risActive = hasInputToVar && activeRule.inputs.includes('node-ris') && activeRule.vars.includes('var-tol');
+            connectElements('node-ris', 'var-tol', risActive ? activeRule.color : inactiveColor, risActive ? 2.5 : 1);
+
+            const conActive = hasInputToVar && activeRule.inputs.includes('node-con') && activeRule.vars.includes('var-con');
+            connectElements('node-con', 'var-con', conActive ? activeRule.color : inactiveColor, conActive ? 2.5 : 1);
+
+            // 2. Caminhos Centro -> Direita (Conservador)
+            const capToCons = hasVarToOutput && activeRule.vars.includes('var-cap') && activeRule.outputs.includes('out-conservador');
+            connectElements('var-cap', 'out-conservador', capToCons ? activeRule.color : inactiveColor, capToCons ? 2.5 : 1);
+
+            const tolToCons = hasVarToOutput && activeRule.vars.includes('var-tol') && activeRule.outputs.includes('out-conservador');
+            connectElements('var-tol', 'out-conservador', tolToCons ? activeRule.color : inactiveColor, tolToCons ? 2.5 : 1);
+
+            // 3. Caminhos Centro -> Direita (Moderado)
+            const capToMod = hasVarToOutput && activeRule.vars.includes('var-cap') && activeRule.outputs.includes('out-moderado');
+            connectElements('var-cap', 'out-moderado', capToMod ? activeRule.color : inactiveColor, capToMod ? 2.5 : 1);
+
+            const tolToMod = hasVarToOutput && activeRule.vars.includes('var-tol') && activeRule.outputs.includes('out-moderado');
+            connectElements('var-tol', 'out-moderado', tolToMod ? activeRule.color : inactiveColor, tolToMod ? 2.5 : 1);
+
+            const conToMod = hasVarToOutput && activeRule.vars.includes('var-con') && activeRule.outputs.includes('out-moderado');
+            connectElements('var-con', 'out-moderado', conToMod ? activeRule.color : inactiveColor, conToMod ? 2.5 : 1);
+
+            // 4. Caminhos Centro -> Direita (Arrojado)
+            const capToArr = hasVarToOutput && activeRule.vars.includes('var-cap') && activeRule.outputs.includes('out-arrojado');
+            connectElements('var-cap', 'out-arrojado', capToArr ? activeRule.color : inactiveColor, capToArr ? 2.5 : 1);
+
+            const tolToArr = hasVarToOutput && activeRule.vars.includes('var-tol') && activeRule.outputs.includes('out-arrojado');
+            connectElements('var-tol', 'out-arrojado', tolToArr ? activeRule.color : inactiveColor, tolToArr ? 2.5 : 1);
+
+            const conToArr = hasVarToOutput && activeRule.vars.includes('var-con') && activeRule.outputs.includes('out-arrojado');
+            connectElements('var-con', 'out-arrojado', conToArr ? activeRule.color : inactiveColor, conToArr ? 2.5 : 1);
+
+            // Destaca visualmente as bordas dos nós envolvidos
+            resetNodeStyles();
+            highlightNodes(activeRule);
+        }
+
+        // Controladores visuais de classes de nós
+        function resetNodeStyles() {
+            document.querySelectorAll('#mindmap-container div').forEach(node => {
+                node.classList.remove('node-active', 'node-conclusion-active', 'border-blue-500', 'border-green-500');
+            });
+        }
+
+        function highlightNodes(activeRule) {
+            if (activeRule.inputs) {
+                activeRule.inputs.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.classList.add('node-active', 'border-blue-500');
+                });
+            }
+            if (activeRule.vars) {
+                activeRule.vars.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.classList.add('node-active', 'border-blue-500');
+                });
+            }
+            if (activeRule.outputs) {
+                activeRule.outputs.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.classList.add('node-conclusion-active', 'border-green-500');
+                });
+            }
+        }
+
+        // Motor de conexões matemáticas curvas Bezier
+        function connectElements(id1, id2, color, thickness) {
+            const svg = document.getElementById('connections-svg');
+            const svgRect = svg.getBoundingClientRect();
+
+            const el1 = document.getElementById(id1);
+            const el2 = document.getElementById(id2);
+
+            if (!el1 || !el2) return;
+
+            const rect1 = el1.getBoundingClientRect();
+            const rect2 = el2.getBoundingClientRect();
+
+            // Pontos relativos
+            const x1 = rect1.right - svgRect.left;
+            const y1 = (rect1.top + rect1.bottom) / 2 - svgRect.top;
+
+            const x2 = rect2.left - svgRect.left;
+            const y2 = (rect2.top + rect2.bottom) / 2 - svgRect.top;
+
+            const offset = (x2 - x1) * 0.4;
+            const pathData = `M ${x1} ${y1} C ${x1 + offset} ${y1}, ${x2 - offset} ${y2}, ${x2} ${y2}`;
+
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', pathData);
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke', color);
+            path.setAttribute('stroke-width', thickness);
+            path.setAttribute('class', 'glow-line');
+            
+            svg.appendChild(path);
+        }
+    </script>
+</body>
+</html>
