@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SINTA Simulator - Inteligência Artificial</title>
+    <!-- Tailwind CSS CDN para Estilização Moderna -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons para Ícones Elegantes -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .glowing-border-active {
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+            border-color: #3b82f6;
+        }
+        .glowing-border-success {
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.5);
+            border-color: #22c55e;
+        }
+        .glow-line {
+            filter: drop-shadow(0 0 4px currentColor);
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-blue-500 selection:text-white">
+
+    <!-- CABEÇALHO -->
+    <header class="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
+        <div class="max-w-10xl mx-auto flex flex-col md:flex-row justify-center items-center md:items-center gap-4">
+            <div class="flex flex-wrap gap-2">
+                <button onclick="applyPreset('conservador')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700 transition duration-200 flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Preset Conservador
+                </button>
+                <button onclick="applyPreset('moderado')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700 transition duration-200 flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full bg-blue-500"></span> Preset Moderado
+                </button>
+                <button onclick="applyPreset('arrojado')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700 transition duration-200 flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full bg-purple-500"></span> Preset Arrojado
+                </button>
+                <button onclick="resetSystem()" class="px-3 py-1.5 bg-red-950/40 hover:bg-red-900/50 text-red-400 text-xs font-semibold rounded-lg border border-red-900/60 transition duration-200 flex items-center gap-1">
+                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Limpar
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ÁREA PRINCIPAL -->
+    <main class="flex-1 max-w-8xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 relative">
+        
+        <!-- COLUNA ESQUERDA: PERGUNTAS (ENTRADAS) -->
+        <section class="lg:col-span-4 flex flex-col gap-4 bg-slate-900/30 p-4 rounded-xl border border-slate-800/80">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h2 class="font-bold text-slate-200 flex items-center gap-2 text-sm">
+                    <i data-lucide="help-circle" class="text-blue-500 w-4 h-4"></i>
+                    Entradas do Sistema (20 Perguntas)
+                </h2>
+                <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-mono" id="progress-text">0/20 Respondidas</span>
+            </div>
+
+            <!-- Tabs de Organização -->
+            <div class="flex gap-1 bg-slate-900 p-1 rounded-lg text-xs">
+                <button onclick="switchTab('financeiro')" id="tab-financeiro" class="flex-1 py-1.5 px-2 rounded-md font-medium text-center bg-blue-600 text-white transition-all">Finanças (P1-P7)</button>
+                <button onclick="switchTab('comportamental')" id="tab-comportamental" class="flex-1 py-1.5 px-2 rounded-md font-medium text-center text-slate-400 hover:text-slate-200 transition-all">Atitude (P8-P14)</button>
+                <button onclick="switchTab('tecnico')" id="tab-tecnico" class="flex-1 py-1.5 px-2 rounded-md font-medium text-center text-slate-400 hover:text-slate-200 transition-all">Técnico (P15-P20)</button>
+            </div>
+
+            <!-- Container das Perguntas -->
+            <div class="flex-1 overflow-y-auto max-h-[580px] pr-1 space-y-4" id="questions-container">
+                <!-- As perguntas serão injetadas via JavaScript para manter o código limpo -->
+            </div>
+        </section>
+
+        <!-- COLUNA CENTRAL: MAPA MENTAL E FLUXO DE ENCADEAMENTO -->
+        <section class="lg:col-span-5 flex flex-col gap-4 bg-slate-900/10 p-4 rounded-xl border border-slate-800/50 relative overflow-hidden">
+            <h2 class="font-bold text-slate-200 flex items-center gap-2 text-sm border-b border-slate-800 pb-3">
+                <i data-lucide="git-branch" class="text-blue-500 w-4 h-4"></i>
+                Mapa Mental de Encadeamento Lógico
+            </h2>
+
+            <!-- Canvas SVG para desenho das conexões das regras -->
+            <div class="flex-1 flex flex-col justify-between items-center relative py-6" id="mindmap-container">
+                <svg id="connections-svg" class="absolute inset-0 w-full h-full pointer-events-none z-0"></svg>
+
+                <!-- Grupo de Entradas Chave Visualizadas -->
+                <div class="grid grid-cols-3 gap-2 w-full z-10">
+                    <div class="bg-slate-900/90 border border-slate-800 p-2 rounded-lg text-center" id="node-inputs-fin">
+                        <span class="text-[10px] text-slate-400 block font-semibold uppercase tracking-wider">Perguntas</span>
+                        <span class="text-xs font-bold text-slate-200">Financeiras</span>
+                    </div>
+                    <div class="bg-slate-900/90 border border-slate-800 p-2 rounded-lg text-center" id="node-inputs-ris">
+                        <span class="text-[10px] text-slate-400 block font-semibold uppercase tracking-wider">Perguntas</span>
+                        <span class="text-xs font-bold text-slate-200">Psicológicas</span>
+                    </div>
+                    <div class="bg-slate-900/90 border border-slate-800 p-2 rounded-lg text-center" id="node-inputs-con">
+                        <span class="text-[10px] text-slate-400 block font-semibold uppercase tracking-wider">Perguntas</span>
+                        <span class="text-xs font-bold text-slate-200">Técnicas</span>
+                    </div>
+                </div>
+
+                <!-- Variáveis Intermediárias -->
+                <div class="flex flex-col gap-6 w-full max-w-sm z-10 my-8">
+                    <!-- Capacidade Financeira -->
+                    <div id="node-cap" class="bg-slate-900/90 border border-slate-800 p-3 rounded-xl transition-all duration-300 relative">
+                        <span class="absolute -top-2.5 left-4 bg-slate-800 text-slate-300 border border-slate-700 px-2 py-0.5 rounded text-[9px] font-mono">Variável Intermediária</span>
+                        <div class="flex justify-between items-center mt-1">
+                            <span class="text-xs font-bold text-slate-200">Capacidade Financeira</span>
+                            <span id="badge-cap" class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-md font-mono">Não Deduzido</span>
+                        </div>
+                    </div>
+
+                    <!-- Tolerância ao Risco -->
+                    <div id="node-ris" class="bg-slate-900/90 border border-slate-800 p-3 rounded-xl transition-all duration-300 relative">
+                        <span class="absolute -top-2.5 left-4 bg-slate-800 text-slate-300 border border-slate-700 px-2 py-0.5 rounded text-[9px] font-mono">Variável Intermediária</span>
+                        <div class="flex justify-between items-center mt-1">
+                            <span class="text-xs font-bold text-slate-200">Tolerância ao Risco</span>
+                            <span id="badge-ris" class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-md font-mono">Não Deduzido</span>
+                        </div>
+                    </div>
+
+                    <!-- Conhecimento de Mercado -->
+                    <div id="node-con" class="bg-slate-900/90 border border-slate-800 p-3 rounded-xl transition-all duration-300 relative">
+                        <span class="absolute -top-2.5 left-4 bg-slate-800 text-slate-300 border border-slate-700 px-2 py-0.5 rounded text-[9px] font-mono">Variável Intermediária</span>
+                        <div class="flex justify-between items-center mt-1">
+                            <span class="text-xs font-bold text-slate-200">Conhecimento de Mercado</span>
+                            <span id="badge-con" class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-md font-mono">Não Deduzido</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Conclusões Finais -->
+                <div class="grid grid-cols-1 gap-2 w-full max-w-xs z-10" id="conclusions-group">
+                    <div id="node-out-conservador" class="bg-slate-900/90 border border-slate-800 p-2.5 rounded-lg text-center transition-all duration-300">
+                        <span class="text-xs font-bold text-slate-300 block">Perfil Conservador</span>
+                    </div>
+                    <div id="node-out-moderado" class="bg-slate-900/90 border border-slate-800 p-2.5 rounded-lg text-center transition-all duration-300">
+                        <span class="text-xs font-bold text-slate-300 block">Perfil Moderado</span>
+                    </div>
+                    <div id="node-out-arrojado" class="bg-slate-900/90 border border-slate-800 p-2.5 rounded-lg text-center transition-all duration-300">
+                        <span class="text-xs font-bold text-slate-300 block">Perfil Arrojado</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- COLUNA DIREITA: CONCLUSÃO FINAL E EXPLICADOR DE REGRAS -->
+        <section class="lg:col-span-3 flex flex-col gap-4">
+            
+            <!-- Painel de Conclusão Final -->
+            <div class="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 p-5 rounded-xl text-center flex flex-col items-center justify-center min-h-[180px] relative overflow-hidden group">
+                <div class="absolute -top-12 -right-12 w-24 h-24 bg-blue-500/10 rounded-full blur-xl group-hover:bg-blue-500/20 transition-all duration-500"></div>
+                
+                <span class="text-[10px] tracking-widest font-mono text-blue-500 font-bold uppercase mb-2">Conclusão do Sistema</span>
+                <div id="final-result-card" class="text-xl font-black text-slate-400 tracking-tight transition-all duration-300">
+                    Aguardando respostas...
+                </div>
+                <div id="final-result-desc" class="text-xs text-slate-400 mt-2 max-w-[200px] mx-auto">
+                    Responda às perguntas para ativar a árvore de inferência lógica.
+                </div>
+            </div>
+
+            <!-- Inspetor de Regras de Produção Ativas -->
+            <div class="bg-slate-900/40 border border-slate-800 p-4 rounded-xl flex-1 flex flex-col gap-3 overflow-hidden">
+                <h3 class="font-bold text-slate-200 text-xs uppercase tracking-wider flex items-center justify-between border-b border-slate-800 pb-2">
+                    <span class="flex items-center gap-1.5">
+                        <i data-lucide="terminal" class="text-blue-500 w-3.5 h-3.5"></i>
+                        Regras Ativadas
+                    </span>
+                    <span id="active-rules-count" class="font-mono bg-slate-800 px-1.5 py-0.5 rounded text-[10px]">0 Ativas</span>
+                </h3>
+
+                <!-- Lista de regras ativas -->
+                <div class="flex-1 overflow-y-auto space-y-2 text-xs" id="active-rules-list">
+                    <div class="text-slate-500 text-center py-8 italic">
+                        Nenhuma regra de produção ativada no momento.
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+
+
+    <!-- LOGIC SYSTEM SCRIPT -->
+    <script>
+        // Dados das 20 perguntas
+        const questions = [
+            { id: 1, text: "Você possui reserva de emergência?", options: ["Sim", "Não"], category: "financeiro" },
+            { id: 2, text: "Você já investiu anteriormente?", options: ["Sim", "Não"], category: "financeiro" },
+            { id: 3, text: "Qual sua idade?", options: ["Menor que 25", "25 a 40", "Acima de 40"], category: "financeiro" },
+            { id: 4, text: "Qual seu objetivo principal?", options: ["Segurança", "Equilíbrio", "Alta rentabilidade"], category: "financeiro" },
+            { id: 5, text: "Quanto tempo pretende deixar investido?", options: ["Menos de 1 ano", "1 a 5 anos", "Mais de 5 anos"], category: "financeiro" },
+            { id: 6, text: "Você se preocupa muito com perdas?", options: ["Sim", "Não"], category: "financeiro" },
+            { id: 7, text: "Você aceitaria perder parte do dinheiro?", options: ["Sim", "Não"], category: "financeiro" },
+            
+            { id: 8, text: "Você acompanha notícias financeiras?", options: ["Frequentemente", "Às vezes", "Nunca"], category: "comportamental" },
+            { id: 9, text: "Qual percentual da renda pretende investir?", options: ["Até 10%", "10% a 30%", "Acima de 30%"], category: "comportamental" },
+            { id: 10, text: "Você possui dívidas atualmente?", options: ["Sim", "Não"], category: "comportamental" },
+            { id: 11, text: "Como reagiria a uma queda de 20%?", options: ["Retiraria o dinheiro", "Esperaria recuperar", "Investiria mais"], category: "comportamental" },
+            { id: 12, text: "Qual tipo de investimento prefere?", options: ["Seguro", "Balanceado", "Arriscado"], category: "comportamental" },
+            { id: 13, text: "Você entende a bolsa de valores?", options: ["Sim", "Parcialmente", "Não"], category: "comportamental" },
+            { id: 14, text: "Qual sua renda mensal?", options: ["Até R$ 2.000", "R$ 2.000 a R$ 8.000", "Acima de R$ 8.000"], category: "comportamental" },
+            
+            { id: 15, text: "Você possui dependentes financeiros?", options: ["Sim", "Não"], category: "tecnico" },
+            { id: 16, text: "Você investiria em criptomoedas?", options: ["Sim", "Não"], category: "tecnico" },
+            { id: 17, text: "Qual nível de estabilidade no emprego?", options: ["Baixa", "Média", "Alta"], category: "tecnico" },
+            { id: 18, text: "Você prefere ganhos rápidos ou estabilidade?", options: ["Estabilidade", "Equilíbrio", "Ganhos rápidos"], category: "tecnico" },
+            { id: 19, text: "Você possui controle financeiro mensal?", options: ["Sim", "Não"], category: "tecnico" },
+            { id: 20, text: "Você está disposto a estudar?", options: ["Sim", "Não"], category: "tecnico" }
+        ];
+
+        // Estado das respostas
+        let answers = {};
+        let currentTab = "financeiro";
+
+        // Inicializar aplicação
+        window.addEventListener('DOMContentLoaded', () => {
+            renderQuestions();
+            updateProgress();
+            lucide.createIcons();
+            setTimeout(drawSVGConnections, 500); // Aguarda renderização para calcular distâncias corretas
+        });
+
+        // Ouvinte de redimensionamento de janela para recalcular conexões
+        window.addEventListener('resize', drawSVGConnections);
+
+        // Renderização Dinâmica das Perguntas
+        function renderQuestions() {
+            const container = document.getElementById('questions-container');
+            container.innerHTML = '';
+
+            questions.forEach(q => {
+                const isHidden = q.category !== currentTab ? 'hidden' : '';
+                
+                const card = document.createElement('div');
+                card.id = `q-card-${q.id}`;
+                card.className = `p-3 bg-slate-900 border border-slate-800 rounded-lg transition-all duration-200 ${isHidden}`;
+                
+                let optionsHTML = '';
+                q.options.forEach(opt => {
+                    const isSelected = answers[q.id] === opt;
+                    const btnClass = isSelected 
+                        ? 'bg-blue-600 border-blue-500 text-white' 
+                        : 'bg-slate-800/50 border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white';
+                    
+                    optionsHTML += `
+                        <button onclick="selectOption(${q.id}, '${opt}')" class="flex-1 text-center py-1.5 px-2 border text-xs rounded-md font-medium transition-all ${btnClass}">
+                            ${opt}
+                        </button>
+                    `;
+                });
+
+                card.innerHTML = `
+                    <div class="flex items-start justify-between gap-2 mb-2">
+                        <span class="text-[10px] text-blue-500 font-mono font-bold mt-0.5">P${q.id}</span>
+                        <h4 class="text-xs font-semibold text-slate-200 flex-1 leading-relaxed">${q.text}</h4>
+                    </div>
+                    <div class="flex gap-1.5">
+                        ${optionsHTML}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Alterar abas de categorias de perguntas
+        function switchTab(tabName) {
+            currentTab = tabName;
+            
+            // Estilos dos botões das abas
+            const tabs = ['financeiro', 'comportamental', 'tecnico'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                if (t === tabName) {
+                    btn.className = "flex-1 py-1.5 px-2 rounded-md font-medium text-center bg-blue-600 text-white transition-all";
+                } else {
+                    btn.className = "flex-1 py-1.5 px-2 rounded-md font-medium text-center text-slate-400 hover:text-slate-200 transition-all";
+                }
+            });
+
+            renderQuestions();
+        }
+
+        // Registrar Seleção de Resposta
+        function selectOption(qId, val) {
+            answers[qId] = val;
+            renderQuestions();
+            updateProgress();
+            runInferenceEngine();
+        }
+
+        // Atualizar barra de progresso
+        function updateProgress() {
+            const count = Object.keys(answers).length;
+            document.getElementById('progress-text').innerText = `${count}/20 Respondidas`;
+        }
+
+        // Presets Rápidos de Demonstração
+        function applyPreset(type) {
+            answers = {};
+            if (type === 'conservador') {
+                answers = {
+                    1: "Não", 10: "Sim", 11: "Retiraria o dinheiro", 6: "Sim", 8: "Nunca", 13: "Não",
+                    2: "Não", 3: "Acima de 40", 4: "Segurança", 5: "Menos de 1 ano", 7: "Não", 9: "Até 10%",
+                    12: "Seguro", 14: "Até R$ 2.000", 15: "Sim", 16: "Não", 17: "Baixa", 18: "Estabilidade",
+                    19: "Não", 20: "Não"
+                };
+            } else if (type === 'moderado') {
+                answers = {
+                    1: "Sim", 9: "10% a 30%", 11: "Esperaria recuperar", 12: "Balanceado", 13: "Parcialmente", 20: "Sim",
+                    2: "Sim", 3: "25 a 40", 4: "Equilíbrio", 5: "1 a 5 anos", 6: "Não", 7: "Sim", 8: "Às vezes",
+                    10: "Não", 14: "R$ 2.000 a R$ 8.000", 15: "Não", 16: "Não", 17: "Média", 18: "Equilíbrio",
+                    19: "Sim", 20: "Sim"
+                };
+            } else if (type === 'arrojado') {
+                answers = {
+                    1: "Sim", 10: "Não", 14: "Acima de R$ 8.000", 11: "Investiria mais", 7: "Sim", 8: "Frequentemente", 13: "Sim",
+                    2: "Sim", 3: "Menor que 25", 4: "Alta rentabilidade", 5: "Mais de 5 anos", 6: "Não", 9: "Acima de 30%",
+                    12: "Arriscado", 15: "Não", 16: "Sim", 17: "Alta", 18: "Ganhos rápidos", 19: "Sim", 20: "Sim"
+                };
+            }
+            renderQuestions();
+            updateProgress();
+            runInferenceEngine();
+        }
+
+        // Limpar o sistema
+        function resetSystem() {
+            answers = {};
+            renderQuestions();
+            updateProgress();
+            runInferenceEngine();
+        }
+
+        // MOTOR DE INFERÊNCIA BASEADO EM REGRAS (Simulando o Expert SINTA)
+        function runInferenceEngine() {
+            // Definição das variáveis intermediárias
+            let capacidadeFinanceira = null;
+            let toleranciaRisco = null;
+            let conhecimentoMercado = null;
+            let conclusao = null;
+
+            // Arrays para registrar regras disparadas
+            let rulesTriggered = [];
+
+            // --- REGRA 1 ---
+            if (answers[1] === "Não" && answers[10] === "Sim") {
+                capacidadeFinanceira = "Baixa";
+                rulesTriggered.push({ id: 1, type: 'inter', text: "SE Reserva(P1) = Não E Dívidas(P10) = Sim ENTÃO Capacidade Financeira = Baixa" });
+            }
+            // --- REGRA 2 ---
+            else if (answers[1] === "Sim" && answers[10] === "Não" && answers[14] === "Acima de R$ 8.000") {
+                capacidadeFinanceira = "Alta";
+                rulesTriggered.push({ id: 2, type: 'inter', text: "SE Reserva(P1) = Sim E Dívidas(P10) = Não E Renda(P14) = Alta ENTÃO Capacidade Financeira = Alta" });
+            }
+            // --- REGRA 3 ---
+            else if (answers[1] === "Sim" && answers[9] === "10% a 30%") {
+                capacidadeFinanceira = "Média";
+                rulesTriggered.push({ id: 3, type: 'inter', text: "SE Reserva(P1) = Sim E Percentual de Renda(P9) = 10% a 30% ENTÃO Capacidade Financeira = Média" });
+            }
+
+            // --- REGRA 4 ---
+            if (answers[11] === "Retiraria o dinheiro" && answers[6] === "Sim") {
+                toleranciaRisco = "Baixa";
+                rulesTriggered.push({ id: 4, type: 'inter', text: "SE Queda de 20%(P11) = Retiraria E Preocupação(P6) = Sim ENTÃO Tolerância ao Risco = Baixa" });
+            }
+            // --- REGRA 5 ---
+            else if (answers[11] === "Investiria mais" && answers[7] === "Sim") {
+                toleranciaRisco = "Alta";
+                rulesTriggered.push({ id: 5, type: 'inter', text: "SE Queda de 20%(P11) = Compraria Mais E Aceita Perdas(P7) = Sim ENTÃO Tolerância ao Risco = Alta" });
+            }
+            // --- REGRA 6 ---
+            else if (answers[11] === "Esperaria recuperar" && answers[12] === "Balanceado") {
+                toleranciaRisco = "Média";
+                rulesTriggered.push({ id: 6, type: 'inter', text: "SE Queda de 20%(P11) = Esperaria E Preferência(P12) = Balanceado ENTÃO Tolerância ao Risco = Média" });
+            }
+            // --- REGRA 10 ---
+            else if (answers[16] === "Sim" && answers[18] === "Ganhos rápidos") {
+                toleranciaRisco = "Alta";
+                rulesTriggered.push({ id: 10, type: 'inter', text: "SE Cripto(P16) = Sim E Ganhos Rápidos(P18) = Sim ENTÃO Tolerância ao Risco = Alta" });
+            }
+            // --- REGRA 11 ---
+            else if (answers[15] === "Sim" && answers[18] === "Estabilidade") {
+                toleranciaRisco = "Baixa";
+                rulesTriggered.push({ id: 11, type: 'inter', text: "SE Dependentes(P15) = Sim E Prefere Estabilidade(P18) = Sim ENTÃO Tolerância ao Risco = Baixa" });
+            }
+
+            // --- REGRA 7 ---
+            if (answers[8] === "Nunca" && answers[13] === "Não") {
+                conhecimentoMercado = "Baixo";
+                rulesTriggered.push({ id: 7, type: 'inter', text: "SE Notícias(P8) = Nunca E Entende Bolsa(P13) = Não ENTÃO Conhecimento = Baixo" });
+            }
+            // --- REGRA 8 ---
+            else if (answers[8] === "Frequentemente" && answers[13] === "Sim") {
+                conhecimentoMercado = "Alto";
+                rulesTriggered.push({ id: 8, type: 'inter', text: "SE Notícias(P8) = Frequentemente E Entende Bolsa(P13) = Sim ENTÃO Conhecimento = Alto" });
+            }
+            // --- REGRA 9 ---
+            else if (answers[13] === "Parcialmente" || answers[20] === "Sim") {
+                conhecimentoMercado = "Médio";
+                rulesTriggered.push({ id: 9, type: 'inter', text: "SE Bolsa(P13) = Parcialmente OU Disposto a Estudar(P20) = Sim ENTÃO Conhecimento = Médio" });
+            }
+
+            // --- REGRAS FINAIS (ENCADEAMENTO LOGICO REAL) ---
+            
+            // --- REGRA 12 ---
+            if (capacidadeFinanceira === "Baixa" || toleranciaRisco === "Baixa") {
+                conclusao = "Perfil Conservador";
+                rulesTriggered.push({ id: 12, type: 'final', text: "SE Capacidade Financeira = Baixa OU Tolerância = Baixa ENTÃO Perfil Conservador" });
+            }
+            // --- REGRA 13 ---
+            else if (capacidadeFinanceira === "Alta" && toleranciaRisco === "Alta" && conhecimentoMercado === "Alto") {
+                conclusao = "Perfil Arrojado";
+                rulesTriggered.push({ id: 13, type: 'final', text: "SE Capacidade = Alta E Tolerância = Alta E Conhecimento = Alto ENTÃO Perfil Arrojado" });
+            }
+            // --- REGRA 14 ---
+            else if (capacidadeFinanceira === "Média" && toleranciaRisco === "Média") {
+                conclusao = "Perfil Moderado";
+                rulesTriggered.push({ id: 14, type: 'final', text: "SE Capacidade = Média E Tolerância = Média ENTÃO Perfil Moderado" });
+            }
+            // --- REGRA 15 ---
+            else if (toleranciaRisco === "Alta" && conhecimentoMercado === "Baixo") {
+                conclusao = "Perfil Moderado";
+                rulesTriggered.push({ id: 15, type: 'final', text: "SE Tolerância = Alta E Conhecimento = Baixo ENTÃO Perfil Moderado (Falta Conhecimento)" });
+            }
+            // --- REGRA 16 ---
+            else if (capacidadeFinanceira === "Alta" && toleranciaRisco === "Média" && answers[4] === "Equilíbrio") {
+                conclusao = "Perfil Moderado";
+                rulesTriggered.push({ id: 16, type: 'final', text: "SE Capacidade = Alta E Tolerância = Média E Objetivo(P4) = Equilíbrio ENTÃO Perfil Moderado" });
+            }
+
+            // Atualizar UI com base no motor
+            updateUI(capacidadeFinanceira, toleranciaRisco, conhecimentoMercado, conclusao, rulesTriggered);
+        }
+
+        // Atualização Geral da Interface Visual
+        function updateUI(cap, ris, con, conclusion, activeRules) {
+            
+            // 1. Atualizar badges das variáveis intermediárias
+            updateNode('node-cap', 'badge-cap', cap);
+            updateNode('node-ris', 'badge-ris', ris);
+            updateNode('node-con', 'badge-con', con);
+
+            // 2. Atualizar nós de saída
+            const outputs = ['conservador', 'moderado', 'arrojado'];
+            outputs.forEach(opt => {
+                const node = document.getElementById(`node-out-${opt}`);
+                node.className = "bg-slate-900/90 border border-slate-800 p-2.5 rounded-lg text-center transition-all duration-300";
+                node.querySelector('span').className = "text-xs font-bold text-slate-400 block";
+            });
+
+            if (conclusion) {
+                const key = conclusion.split(' ')[1].toLowerCase();
+                const node = document.getElementById(`node-out-${key}`);
+                if (node) {
+                    node.className = "bg-green-950/40 border border-green-500/70 p-2.5 rounded-lg text-center glowing-border-success transition-all duration-300 scale-105 z-20";
+                    node.querySelector('span').className = "text-xs font-bold text-green-400 block";
+                }
+            }
+
+            // 3. Atualizar painel de Conclusão Final
+            const resultCard = document.getElementById('final-result-card');
+            const resultDesc = document.getElementById('final-result-desc');
+            
+            if (conclusion) {
+                resultCard.className = "text-2xl font-black tracking-tight text-green-400 transition-all duration-300 scale-110";
+                resultCard.innerText = conclusion;
+
+                if (conclusion === "Perfil Conservador") {
+                    resultDesc.innerText = "Prioridade absoluta à segurança. O sistema identificou incapacidade financeira de suportar perdas ou perfil psicológico avesso a oscilações.";
+                } else if (conclusion === "Perfil Moderado") {
+                    resultDesc.innerText = "Equilíbrio equilibrado entre rentabilidade e risco. Capacidade financeira média ou tolerância de risco limitada por falta de conhecimento técnico.";
+                } else if (conclusion === "Perfil Arrojado") {
+                    resultDesc.innerText = "Capacidade financeira impecável combinada com alto controle psicológico sobre perdas e conhecimento profundo do mercado de capitais.";
+                }
+            } else {
+                resultCard.className = "text-lg font-bold text-slate-400 tracking-tight transition-all duration-300";
+                resultCard.innerText = "Aguardando respostas...";
+                resultDesc.innerText = "Responda às perguntas para ativar a árvore de inferência lógica.";
+            }
+
+            // 4. Renderizar painel de Regras Ativas
+            const rulesCount = document.getElementById('active-rules-count');
+            const rulesList = document.getElementById('active-rules-list');
+            rulesCount.innerText = `${activeRules.length} Ativas`;
+
+            if (activeRules.length === 0) {
+                rulesList.innerHTML = `
+                    <div class="text-slate-500 text-center py-8 italic">
+                        Nenhuma regra de produção ativada no momento.
+                    </div>
+                `;
+            } else {
+                rulesList.innerHTML = '';
+                activeRules.forEach(rule => {
+                    const block = document.createElement('div');
+                    block.className = `p-2.5 rounded border transition-all duration-300 ${
+                        rule.type === 'final' 
+                            ? 'bg-green-950/30 border-green-900/60 text-green-300' 
+                            : 'bg-blue-950/30 border-blue-900/60 text-blue-300'
+                    }`;
+                    block.innerHTML = `
+                        <div class="flex items-center justify-between font-mono text-[9px] font-bold mb-1 opacity-80">
+                            <span>REGRA ${rule.id}</span>
+                            <span class="uppercase tracking-wider">${rule.type === 'final' ? 'Dedução Final' : 'Intermediária'}</span>
+                        </div>
+                        <p class="text-[11px] leading-relaxed font-sans font-medium">${rule.text}</p>
+                    `;
+                    rulesList.appendChild(block);
+                });
+            }
+
+            // 5. Redesenhar conexões visuais
+            drawSVGConnections(cap, ris, con, conclusion);
+        }
+
+        // Função de utilidade para atualizar estilização dos nós intermediários
+        function updateNode(nodeId, badgeId, value) {
+            const node = document.getElementById(nodeId);
+            const badge = document.getElementById(badgeId);
+
+            if (value) {
+                node.className = "bg-blue-950/40 border border-blue-500 p-3 rounded-xl glowing-border-active transition-all duration-300 scale-105";
+                badge.className = "text-[10px] bg-blue-500 text-white px-2 py-0.5 rounded-md font-mono font-bold";
+                badge.innerText = value;
+            } else {
+                node.className = "bg-slate-900/90 border border-slate-800 p-3 rounded-xl transition-all duration-300";
+                badge.className = "text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-md font-mono";
+                badge.innerText = "Não Deduzido";
+            }
+        }
+
+        // Algoritmo de desenho de conexões SVG (Dynamic Node Chaining Visualization)
+        function drawSVGConnections(cap, ris, con, conclusion) {
+            const svg = document.getElementById('connections-svg');
+            svg.innerHTML = '';
+
+            const inputsFin = document.getElementById('node-inputs-fin');
+            const inputsRis = document.getElementById('node-inputs-ris');
+            const inputsCon = document.getElementById('node-inputs-con');
+
+            const nodeCap = document.getElementById('node-cap');
+            const nodeRis = document.getElementById('node-ris');
+            const nodeCon = document.getElementById('node-con');
+
+            const nodeOutCons = document.getElementById('node-out-conservador');
+            const nodeOutMod = document.getElementById('node-out-moderado');
+            const nodeOutArr = document.getElementById('node-out-arrojado');
+
+            if (!svg || !inputsFin || !nodeCap || !nodeOutCons) return;
+
+            // Desenhar conexões de entrada -> intermediário
+            connectElements(inputsFin, nodeCap, cap ? '#3b82f6' : '#334155', cap ? 2 : 1);
+            connectElements(inputsRis, nodeRis, ris ? '#3b82f6' : '#334155', ris ? 2 : 1);
+            connectElements(inputsCon, nodeCon, con ? '#3b82f6' : '#334155', con ? 2 : 1);
+
+            // Desenhar conexões de intermediário -> conclusões finais baseado na árvore de decisão ativa
+            const isCons = conclusion === "Perfil Conservador";
+            const isMod = conclusion === "Perfil Moderado";
+            const isArr = conclusion === "Perfil Arrojado";
+
+            // Se for conservador, acende caminhos para conservador se as condições correspondentes forem atendidas
+            connectElements(nodeCap, nodeOutCons, (isCons && cap === 'Baixa') ? '#22c55e' : '#334155', (isCons && cap === 'Baixa') ? 2 : 1);
+            connectElements(nodeRis, nodeOutCons, (isCons && ris === 'Baixa') ? '#22c55e' : '#334155', (isCons && ris === 'Baixa') ? 2 : 1);
+
+            // Se for moderado
+            connectElements(nodeCap, nodeOutMod, (isMod && cap === 'Média') ? '#22c55e' : '#334155', (isMod && cap === 'Média') ? 2 : 1);
+            connectElements(nodeRis, nodeOutMod, (isMod && (ris === 'Média' || ris === 'Alta')) ? '#22c55e' : '#334155', (isMod && (ris === 'Média' || ris === 'Alta')) ? 2 : 1);
+            connectElements(nodeCon, nodeOutMod, (isMod && con === 'Baixo') ? '#22c55e' : '#334155', (isMod && con === 'Baixo') ? 2 : 1);
+
+            // Se for arrojado
+            connectElements(nodeCap, nodeOutArr, isArr ? '#22c55e' : '#334155', isArr ? 2 : 1);
+            connectElements(nodeRis, nodeOutArr, isArr ? '#22c55e' : '#334155', isArr ? 2 : 1);
+            connectElements(nodeCon, nodeOutArr, isArr ? '#22c55e' : '#334155', isArr ? 2 : 1);
+        }
+
+        // Desenhar uma curva Bezier cúbica elegante entre dois elementos HTML
+        function connectElements(el1, el2, color, thickness) {
+            const svg = document.getElementById('connections-svg');
+            const svgRect = svg.getBoundingClientRect();
+
+            const rect1 = el1.getBoundingClientRect();
+            const rect2 = el2.getBoundingClientRect();
+
+            // Calcular pontos médios locais em relação ao elemento SVG de fundo
+            const x1 = (rect1.left + rect1.right) / 2 - svgRect.left;
+            const y1 = (rect1.top + rect1.bottom) / 2 - svgRect.top;
+
+            const x2 = (rect2.left + rect2.right) / 2 - svgRect.left;
+            const y2 = (rect2.top + rect2.bottom) / 2 - svgRect.top;
+
+            // Criar caminho curvo suave de cima para baixo
+            const controlOffset = Math.abs(y2 - y1) * 0.5;
+            const pathData = `M ${x1} ${y1} C ${x1} ${y1 + controlOffset}, ${x2} ${y2 - controlOffset}, ${x2} ${y2}`;
+
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', pathData);
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke', color);
+            path.setAttribute('stroke-width', thickness);
+            path.setAttribute('class', `glow-line ${thickness > 1 ? 'opacity-100' : 'opacity-30'}`);
+            
+            svg.appendChild(path);
+        }
+    </script>
+</body>
+</html>
